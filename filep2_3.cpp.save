@@ -1,0 +1,191 @@
+#include<iostream>
+#include<fstream>
+#include<stdlib.h>
+#include<string.h>
+using namespace std;
+class trie
+{
+	public:
+	char data[27],key[27];
+	trie *link[27];
+	trie()
+	{
+		for(int i=0;i<27;i++)
+		{
+			link[i]=NULL;
+			data[i]='\0';
+			key[i]='\0';
+		}
+	}
+};
+struct file
+{
+	char name[26];
+	int num[26];
+};
+void search(trie*);
+void search_middle(trie*,char*);
+int main()
+{
+	char ch='y';//used in do while loop
+	file f;//for reading the names and array in file
+	trie *ptr=new trie;//used to traverse through trie
+	trie *node=new trie;//used as the root of the trie
+	trie *head=new trie;//used to traverse through trie
+	head=ptr=node;//assumes everything to the root
+	int i=0;//counter variable used for the indexing of letters in words
+	int j=0;//counter variable for loops
+	int c=0;//counter variable for the input of all the words in the database
+	int k=0;//index variable for words converted from ascii values to 0,1,2,.. etc..
+	int some=0;//counter variable to find the unknonw index of any word
+	int ascnum[26];//to store the ascii numbers-97 for every letters in the current given word
+	int len=0;//string length for the file name currently in use
+	int giv_len=0;//string length for the given name currently in use
+	char given[27];//input word
+	fstream file1;
+	file1.open("names.dat",ios::binary | ios::in);//opening the give file
+	k=given[0]-97;//index variable
+	for(c=0;c<3;c++)//loop for every input
+	{
+		ptr=head=node;//assigning everything to root
+		file1.read((char*) &f,sizeof(f));
+		len=strlen(f.name);
+		i=0;
+		strcpy(ptr->data,"empty");
+		while(f.name[i]!='\0')//creating the word in the existing trie
+		{
+			k=f.name[i]-97;
+			trie *temp=new trie;//used for assigning new address
+			for(j=0;j<=i;j++)//copying the data to node's data
+				temp->data[j]=f.name[j];
+			temp->data[j]='\0';
+			if(c==0)//condition for preventing coincidence
+			{
+				if(i==0)
+               	                        node->link[k]=temp;
+                                ptr->link[k]=temp;
+				ptr=temp;
+			}//end if
+			else
+			{
+				if(ptr->link[k]!=NULL)
+					ptr=ptr->link[k];
+				else
+				{
+					ptr=ptr->link[k]=temp;
+					if(i==0)
+						node->link[k]=temp;
+				}//end else
+			}//end else
+			++i;//goes to next letter of the existing word
+		}//end while loop
+		strcpy(ptr->key,f.name);//ptr->key contains the file words while others contain null in key
+	}//end for loop
+	do
+	{
+                cout<<"\nEnter the word to search:";              cin>>given;
+                while(given[i]!='\0')//converting every input to lowercase
+                {
+                        given[i]=tolower(given[i]);
+                        i++;
+                }//end while
+		k=given[0]-97;
+		ptr=head=node;
+		if(k>=0)
+		{
+			ptr=head=node;
+			i=0;
+			k=given[i]-97;
+			while(given[i]!='\0' && ptr->link[k]!=NULL)//traversing through the trie
+			{
+				k=given[i]-97;
+				ptr=ptr->link[k];
+				if(strcmp(ptr->data,"\0")==0)
+					break;
+				i++;
+				k=given[i]-97;
+			}//end while
+			file1.seekp(0,ios::beg);
+			if(strcmp(given,ptr->key)==0)
+				cout<<"Search:"<<ptr->data;
+			else if(i>2)
+			{
+				cout<<"Search"<<endl;
+				search(ptr);
+			}
+			else if(i<3)
+			{
+				cout<<"i<3"<<endl<<i<<endl;
+				//search_middle(node,given);
+				some=0;
+				len=strlen(given);
+				cout<<"Search:";
+				for(j=0;given[j];j++)
+					ascnum[j]=given[j]-97;
+				file1.seekp(0,ios::beg);
+				c=0;
+				while(file1.read((char *)&f,sizeof(f)))
+				{
+					giv_len=strlen(f.name);
+					k=0;
+					for(i=0;i<len;i++)
+					{
+						for(j=0;j<giv_len;j++)
+						{
+							if(f.num[i]==ascnum[j])
+							{
+								cout<<"i--"<<f.name[i]<<endl;
+								if(f.num[++i]==ascnum[++j])
+								{
+									cout<<"i++"<<f.name[i]<<endl;
+									++k;
+									++c;
+									break;
+									cout<<c<<"k-"<<k<<endl;
+								}
+								--i;
+								--j;
+							}
+							if(c>0)
+								break;
+						}
+						if(c>0)
+                                file1.seekp(0,ios::beg);
+							break;
+					}
+					if(k>0)
+						cout<<f.name<<endl;
+				}
+				if(c==0)
+					cout<<"1Search not found!"<<endl;
+			}
+			else
+				cout<<"2Search not found!"<<endl;
+		}
+		else
+			cout<<"\n3Search not found!"<<endl;
+	}while(ch=='y');//end do while loop
+	file1.close(); 
+}//end main
+void search(trie *ptr)//function to print all the outputs
+{
+//	cout<<"Search"<<endl;
+	int some=0,i;
+	for(i=0;i<26;i++)
+		if(ptr->link[i]!=NULL)
+			search(ptr->link[i]);
+	if(ptr->key[0]!='\0')
+			cout<<ptr->key<<endl;
+}
+
+/*void search_middle(trie *ptr,char *given)
+{
+	cout<<"search_middle"<<endl;
+	int some=0,i=0;
+	for(i=0;i<=25;i++)
+		if(ptr->link[i]!=NULL)
+			search_middle(ptr->link[i],given);
+	if(strcmp(strstr(given,ptr->key),"\0")>1 || strcmp(strstr(given,ptr->key),"\0")<-1)
+		search(ptr);
+}
+*/
